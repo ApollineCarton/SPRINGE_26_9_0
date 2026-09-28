@@ -1,0 +1,80 @@
+# ============================================================================
+# SPRINGE 26.9.0 — Dépendances Python
+# ============================================================================
+# Système de PRiorisation des INterventions de Gestion des EEE
+# Auteur : Apolline CARTON — Office Français de la Biodiversité (OFB)
+# Version : 26.9.0 (septembre 2026)
+#
+# INSTALLATION :
+#   pip install -r requirements.txt
+#
+# PROBLÈME AVEC GEOPANDAS ?
+#   conda install -c conda-forge geopandas
+#
+# NOTES VERSION 26.9.0 :
+#   • Toutes les dépendances ont été maintenues à jour (sept 2026)
+#   • Compatible Python 3.10+
+#   • Testées sur Windows / macOS / Linux
+# ============================================================================
+
+# ── DONNÉES & CALCULS SCIENTIFIQUES ──────────────────────────────────────
+# Manipulation de données tabulaires et calculs matriciels
+pandas==2.3.3          # Dataframes, CSV, Excel
+numpy==2.3.5           # Calculs matriciels, algèbre linéaire
+
+# ── GÉOSPATIAL & CARTOGRAPHIE ──────────────────────────────────────────
+# Couches SIG, reprojetion, jointures spatiales, API géographiques
+geopandas==1.1.2       # GeoDataFrames, fichiers SIG (shp, gpkg)
+shapely==2.1.2         # Géométries (points, lignes, polygones)
+pyproj==3.7.2          # Reprojection de systèmes de coordonnées
+pyogrio==0.12.1        # Lecture/écriture optimisée fichiers SIG
+rtree==1.4.0           # Index spatial (optimisation jointures)
+rasterio==1.5.0        # Lecture rasters (MNT, orthophoto)
+contextily==1.7.0      # Fonds de carte (OpenStreetMap, etc.)
+xyzservices==2025.11.0 # Catalogues services web cartographiques
+mercantile==1.2.1      # Web Mercator et tuiles cartographiques
+
+# ── APPELS API ──────────────────────────────────────────────────────────
+# Téléchargement de données depuis services web
+OWSLib==0.31.0         # WFS/WMS (IGN, INPN, BD TOPO)
+requests==2.32.3       # Requêtes HTTP (SNCF, autres APIs)
+geojson==3.2.0         # Parsing GeoJSON
+
+# ── GRAPHIQUES & VISUALISATIONS ──────────────────────────────────────
+# Visualisations statiques et interactives
+matplotlib==3.10.8     # Graphiques classiques (plots)
+plotly==6.3.0          # Graphiques interactifs (HTML)
+Pillow==12.1.0         # Traitement images, export PNG/JPEG
+
+# ── CALCULS AVANCÉS ─────────────────────────────────────────────────────
+# Optimisation, analyse réseau, statistiques
+scipy==1.16.3          # Statistiques, optimisation
+networkx==3.6.1        # Analyse de réseau (graphes)
+
+# ============================================================================
+# NOTES D'INSTALLATION
+# ============================================================================
+#
+# INSTALLATION STANDARD (pip) :
+#   pip install -r requirements.txt
+#   Temps : ~3-5 minutes selon connexion
+#
+# INSTALLATION ROBUSTE (Anaconda/Miniconda) :
+#   conda create -n springe python=3.10
+#   conda activate springe
+#   pip install -r requirements.txt
+#   OU
+#   conda install -c conda-forge geopandas rasterio rtree
+#   pip install -r requirements.txt
+#
+# VÉRIFICATION APRÈS INSTALLATION :
+#   python -c "import geopandas; import pandas; print('OK')"
+#   Doit afficher : OK
+#
+# PROBLÈMES COURANTS :
+#   • rtree ou rasterio échouent → lancer via conda
+#   • geopandas échoue → conda install -c conda-forge geopandas
+#   • Permission denied → pip install --user -r requirements.txt
+#   • Multiprocessing → pip install -r requirements.txt --no-build-isolation
+#
+# ============================================================================
