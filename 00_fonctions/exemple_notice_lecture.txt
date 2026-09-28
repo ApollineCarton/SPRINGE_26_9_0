@@ -1,0 +1,258 @@
+==============================================================================
+SPRINGE — NOTICE DE LECTURE
+Caractérisation des populations d'espèces exotiques envahissantes
+==============================================================================
+
+  Projet        : TEST
+  DIR           : DIRO
+  Généré le     : 08/09/2026 à 20:35
+  Se rapporte à : SPRINGE_TEST.gpkg
+
+  Cette notice est régénérée à chaque exécution et ne vaut que pour
+  les résultats ci-dessus. Pour la méthode de calcul et la
+  justification des choix, voir le document de présentation de
+  l'algorithme SPRINGE.
+
+==============================================================================
+1. CE QUE CES DONNÉES MESURENT — À LIRE EN PREMIER
+==============================================================================
+
+Les résultats de cette partie de SPRINGE ne mesurent NI une densité,
+NI une abondance de plantes. Ce point est la source d'erreur
+d'interprétation la plus fréquente.
+
+--- L'unité d'observation ---
+
+Vos données suivent le protocole national de recensement :
+
+    Albert, A. (coord.) 2017. Protocole d'acquisition de données sur
+    les plantes exotiques envahissantes le long du réseau routier
+    national. Fédération des Conservatoires botaniques nationaux,
+    Montreuil, 24 p.
+    https://especes-exotiques-envahissantes.fr/wp-content/uploads/
+    2023/01/fcbn-dit_eee_protocolerecensement_25072017.pdf
+
+Ce protocole définit l'unité d'observation par une règle de distance :
+deux individus ou deux taches d'une même espèce distants de moins de
+50 mètres forment UNE SEULE population. Au-delà de 50 mètres, ce sont
+deux populations distinctes.
+
+    >>> UN POINT = UNE POPULATION, PAS UNE PLANTE. <<<
+
+Conséquence contre-intuitive : une forte concentration de végétation
+ne produit PAS un amas de points sur la carte, mais UN SEUL point
+portant des attributs de taille et de compacité élevés.
+
+--- Vocabulaire ---
+
+  Population    Ensemble d'individus d'une même espèce dont aucun
+                n'est distant de plus de 50 m du suivant. C'est
+                l'unité comptée par SPRINGE.
+
+  Abondance     Nombre d'individus. NON MESURÉE : le protocole ne
+                compte pas les plantes.
+
+  Densité       Nombre d'individus par unité de surface. NON MESURÉE,
+                et même mal définie pour les espèces à multiplication
+                végétative : une grande tache de renouée peut ne
+                constituer qu'un seul individu porteur de milliers
+                de tiges.
+
+  Compacité     Structure interne d'une population : individus isolés,
+                taches discontinues, ou population continue. C'est ce
+                que le protocole nomme « densité des individus de la
+                population ». Appréciation visuelle ordinale, PAS une
+                densité numérique.
+
+  Ampleur       Emprise d'une population, en classes de largeur et de
+                longueur. Aucune surface en m² n'est calculée : les
+                classes du protocole sont ouvertes aux extrémités
+                (« plus de 3 m », « plus de 20 m »), donc toute
+                conversion en m² supposerait d'inventer des bornes.
+
+  Fréquence     Proportion d'unités où l'espèce est présente. C'est,
+                avec l'ampleur et la compacité, ce que SPRINGE mesure
+                réellement.
+
+--- Ce que SPRINGE mesure réellement ---
+
+  1. La FRÉQUENCE des populations : combien de foyers distincts.
+  2. Leur AMPLEUR : combien de foyers par classe de largeur et de
+     longueur.
+  3. Leur COMPACITÉ : isolés, en taches, ou continus.
+  4. Leur RÉPARTITION le long de l'axe routier.
+
+Deux tronçons ne peuvent donc PAS être comparés en abondance. Ils
+peuvent l'être en fréquence de foyers, en ampleur de ces foyers et en
+compacité.
+
+Un tronçon portant 1 population continue de plus de 20 m peut porter
+bien plus de végétation qu'un tronçon portant 8 populations
+d'individus isolés de moins de 5 m.
+
+==============================================================================
+2. HYPOTHÈSES ASSUMÉES PAR LE CALCUL
+==============================================================================
+
+Ces choix sont détaillés et justifiés dans le document de présentation
+de l'algorithme. Ils sont rappelés ici parce qu'ils déterminent la
+lecture des résultats.
+
+  • Aucun score, aucun rang, aucun adjectif de valeur n'est produit.
+    Une forte colonisation n'appelle pas mécaniquement une
+    intervention : selon sa stratégie, un gestionnaire peut cibler les
+    foyers denses ou au contraire les petits foyers isolés en front de
+    colonisation. L'outil décrit, vous décidez.
+
+  • Aucune valeur manquante n'est remplacée. Une largeur ou une
+    compacité absente est comptée comme « non renseigné », jamais
+    ramenée à une classe par défaut, ce qui déplacerait toute la
+    distribution.
+
+  • Aucune surface en m² n'est calculée (voir « Ampleur » ci-dessus).
+
+  • Aucun indice statistique d'agrégation n'est calculé. La question
+    « les foyers sont-ils groupés ou étalés ? » est légitime, mais le
+    nombre de populations par tronçon est trop faible pour qu'un tel
+    indice ait un sens. Seules des mesures brutes sont fournies
+    (étendue occupée, écarts entre populations).
+
+  • Une population à cheval sur deux tronçons est comptée sur chacun
+    d'eux : la tache existe réellement sur les deux.
+
+==============================================================================
+3. QUALITÉ DES DONNÉES DE VOTRE ZONE
+==============================================================================
+
+  --- Couverture ---
+
+  Tronçons de la zone d'étude          : 3758
+  dont sans observation enregistrée    : 500 (13.3 %)
+  Populations de la couche source      : 8288
+  Populations rattachées à un tronçon  : 8298
+  Populations hors de tout tronçon     : 10 (ignorées)
+  Rattachements de bordure ajoutés     : 20
+     (populations à cheval, comptées sur chacun de leurs tronçons —
+      le total par tronçon dépasse donc l'effectif de la couche)
+
+  --- Populations par catégorie d'EEE ---
+
+  Reynoutria sp                    2268
+  Ailanthus altissima              2214
+  Ambrosia artemisiifolia          2002
+  EEE autre                        1804
+  Heracleum mantegazzianum         10
+
+  --- Taux de non-renseigné ---
+  (entre parenthèses : le taux du jeu national de référence)
+
+  Largeur                          15.5 %   (national : 15.5 %)
+  Longueur                         2.7 %   (national : 2.7 %)
+  Compacité                        17.8 %   (national : 17.8 %)
+  Localisation sur dépendance      4.3 %
+
+  --- Indicateurs de structure ---
+
+  Populations de moins de 5 m      47.7 %   (national : 47.7 %)
+  Couples à une seule population   55.9 %   (national : 56.0 %)
+  Linéaire minimum nul             44.9 %
+  Écarts inférieurs à 50 m         26.7 %   (national : 26.8 %)
+  Populations à position identique 131
+     (signalées, jamais supprimées : deux populations réelles
+      peuvent être saisies au même PR, l'une sur l'accotement
+      et l'autre sur le talus)
+
+  --- Dates de relevé ---
+
+  Années rencontrées : 1988 à 2024
+  Dates tombant un 1er du mois : 55.6 %
+
+==============================================================================
+4. AVERTISSEMENTS
+==============================================================================
+
+--- Avertissements permanents ---
+
+Ces trois points valent quelle que soit la qualité de vos données.
+Ils ne dépendent d'aucun seuil parce que le risque de mauvaise
+lecture, lui, est permanent.
+
+  ⚠  Un point représente une POPULATION au sens du protocole, pas une
+     plante. Un tronçon portant plus de points porte plus de foyers
+     distincts, pas nécessairement plus de végétation.
+
+  ⚠  Un tronçon sans observation enregistrée n'est PAS un tronçon sans
+     EEE. SPRINGE ne dispose d'aucune information sur la couverture de
+     prospection de votre zone : rien ne permet de distinguer
+     « prospecté sans résultat » de « non prospecté » ou « non
+     transmis ». C'est pourquoi ces tronçons portent la mention
+     « aucune observation enregistrée » et non la valeur 0.
+
+  ⚠  Une population à cheval sur deux tronçons est comptée sur chacun
+     d'eux. Le total des populations par tronçon dépasse donc
+     légèrement l'effectif de la couche source. Ce n'est pas un
+     doublon, c'est une double appartenance réelle.
+
+--- Avertissements propres à votre zone ---
+
+Ces avertissements se déclenchent quand vos données sont moins
+bien renseignées que le jeu national de référence.
+
+  ⚠  Votre zone mélange des campagnes espacées de 36 ans (1988 à 2024).
+    Deux tronçons relevés à des dates différentes ne sont pas comparables
+    à état de colonisation égal.
+    (seuil : 4 ans, durée du cycle d'actualisation prévu au § IV.4 du protocole)
+
+  ⚠  55.6 % des dates de relevé tombent un 1er du mois.
+    C'est souvent l'indice de dates forfaitaires attribuées à un lot
+    entier plutôt que relevées sur le terrain. Les années restent
+    exploitables, les dates précises beaucoup moins.
+    (à titre de comparaison, le jeu national de référence est à 55,6 %)
+
+
+==============================================================================
+5. CE QUE CES DONNÉES NE PERMETTENT PAS DE CONCLURE
+==============================================================================
+
+  • Comparer l'abondance de plantes entre deux tronçons. La donnée
+    porte sur des populations, pas sur des individus.
+
+  • Calculer une densité au sens écologique, en individus par unité de
+    surface.
+
+  • Conclure à l'absence d'EEE sur un tronçon sans observation.
+
+  • Qualifier statistiquement l'agencement des populations d'un
+    tronçon (« agrégé », « aléatoire », « régulier »).
+
+  • Estimer une surface à traiter en mètres carrés.
+
+==============================================================================
+6. OÙ TROUVER LES RÉSULTATS
+==============================================================================
+
+Le GeoPackage contient deux objets pour cette partie :
+
+  1. La couche cartographique des tronçons, enrichie de champs de
+     synthèse toutes catégories confondues :
+       - statut_donnee            observations enregistrées ou non
+       - nb_populations_total     toutes catégories confondues
+       - nb_categories_presentes  de 0 à 5
+       - synthese_EEE             résumé rédigé, lisible au clic
+       - annee_releve_max         relevé le plus récent
+
+  2. La table 'caracterisation_EEE_par_troncon_espece', sans
+     géométrie, qui porte le détail : une ligne par tronçon et par
+     catégorie d'EEE, avec les comptages par classe de largeur, de
+     longueur et de compacité, le linéaire colonisé minimum et les
+     descripteurs de répartition.
+
+     Pour l'utiliser dans QGIS : Couche > Ajouter une couche > Couche
+     vecteur, puis jointure sur le champ 'id_troncon'.
+
+Le détail de chaque champ figure dans le document de présentation de
+l'algorithme SPRINGE.
+
+==============================================================================
+Fin de la notice
+==============================================================================
