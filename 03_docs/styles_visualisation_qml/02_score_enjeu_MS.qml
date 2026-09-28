@@ -1,0 +1,532 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  SPRINGE — Style 02 : score de l'enjeu MS (Maintenance et Sécurité)
+  ════════════════════════════════════════════════════════════════════════
+  Couche cible : couche cartographique des tronçons du GeoPackage SPRINGE.
+  Testé sur    : QGIS 3.34.4 (chargement, classement, rendu).
+                 Chargement vérifié par l'utilisatrice sur 3.44.11 pour
+                 les styles 00, 01 et 05 ; à revérifier pour celui-ci.
+
+  Question : « Pour l'enjeu Maintenance et Sécurité, le score du tronçon implique-t-il
+              des indicateurs réellement impactés, et combien ? »
+
+  Logique des seuils : même raisonnement que le score total, appliqué aux
+  indicateurs. Pour chaque indicateur, on fixe le score à partir duquel il
+  est « impacté » (tronçon vulnérable ET EEE d'intensité modérée à forte) :
+    MS1, MS2, MS3 : 4 et 5 (3 mêle « vulnérable + faible » et « non
+                    vulnérable + fort »)       MS1b : jamais (bonus trafic)
+    N1 : 4 et 5 (zone de niveau 1 ou 2)        N2 : 4 et 5 (transformation
+                                                    forte ou maximale)
+    P1 : jamais (trait de l'espèce)            P2 : 4 et 5 (cours d'eau +
+    P3 : 2 (zone de niveau 1 ou 2)                  carrefour/échangeur/VF)
+    P4 : 3 et 4 (au moins 2 indicateurs vulnérables chez les voisins)
+  Borne 1 = somme des scores maximaux SANS indicateur impacté.
+  Borne 2 = borne 1 + le plus grand gain d'UN seul indicateur impacté.
+  Au-delà de la borne 2, au moins 2 indicateurs sont nécessairement impactés.
+  ⚠ Valable uniquement avec tous les coefficients du lanceur à 1.
+
+  Pour l'enjeu MS (maximum 16) :
+    maxima sans impact : MS1 3 + MS1b 1 + MS2 3 + MS3 3 = 10  → borne 1
+    un seul impacté : +2 au plus (3 → 5)                 = 12  → borne 2
+
+  Couleurs : dégradé de la couleur de référence de l'enjeu (#FFCB25),
+  du clair (#FFEAA7) au foncé (#B88C00).
+
+  Éléments communs à tous les styles SPRINGE :
+    - Tronçons SANS observation : toujours en TIRETS, sans remplissage.
+      Dans les styles de SCORE (01 à 04), ils prennent la couleur de la
+      première classe : sans EEE connue, tous les indicateurs valent 0, donc
+      la classe est juste — « pas de problématique APPARENTE », au vu des
+      données disponibles. Dans les styles DESCRIPTIFS (05 à 10), ils restent
+      en gris #A6A6A6 : nombre de populations, compacité ou année n'ont
+      aucune valeur mesurée pour eux.
+      Dans tous les cas : une absence d'observation n'est PAS une absence
+      d'EEE, et à l'échelle d'une DIR les tirets se fondent en trait continu
+      (la distinction n'apparaît qu'en zoomant).
+    - Triangle jaune cerclé de noir : tronçon composé de plusieurs portions
+      dispersées (polygones portant le même identifiant, fusionnés par le
+      lanceur). Ses valeurs sont calculées sur TOUTES ses portions réunies.
+      Un triangle est posé sur chaque portion, à partir du 1:100 000.
+    - Règles de contrôle « à vérifier » en noir pointillé : aucun tronçon
+      ne disparaît de la carte sans prévenir.
+    - Étiquettes du numéro de tronçon, tamponnées, à partir du 1:50 000.
+    - Info-bulle au survol (Vue > Afficher les info-bulles, couche active).
+
+  Comment le charger :
+      Clic droit sur la couche > Propriétés > Symbologie > Style (en bas)
+      > Charger le style... > choisir ce fichier.
+  Ce fichier contient symbologie + étiquettes + info-bulle : il remplace
+  les étiquettes éventuellement configurées sur la couche.
+  Les commentaires disparaissent si le style est ré-enregistré depuis QGIS.
+  ════════════════════════════════════════════════════════════════════════
+-->
+<!--
+  styleCategories : symbologie, étiquettes et info-bulle. Formulaires, jointures et champs de la couche ne sont pas touchés.
+-->
+<qgis version="3.34.4-Prizren" styleCategories="Symbology|Labeling|MapTips" labelsEnabled="1">
+
+  <!--
+    ──────────────────────────────────────────────────────────────────────
+    MOTEUR DE RENDU « ensemble de règles », légende À PLAT
+    ──────────────────────────────────────────────────────────────────────
+    Fonctionnement à connaître : un tronçon est dessiné par TOUTES les
+    règles qu'il vérifie, pas seulement par la première. On s'en sert :
+      - les règles de CLASSES (et de contrôle) ont des filtres mutuellement
+        exclusifs : chaque tronçon reçoit une seule couleur ;
+      - la règle du TRIANGLE est volontairement indépendante : elle
+        s'AJOUTE par-dessus la couleur du tronçon.
+
+    Toutes les règles sont au même niveau, sans règle « groupe » : QGIS
+    replie les sous-groupes dans le panneau Couches et dans la fenêtre
+    Symbologie, ce qui cachait les classes de couleur (version précédente).
+
+    Pas de règle ELSE non plus : un ELSE ne s'applique qu'aux tronçons qui
+    ne vérifient AUCUNE autre règle du même niveau, triangle compris. Un
+    tronçon fragmenté y échapperait. Les règles de contrôle « à vérifier »
+    écrivent donc explicitement le contraire des classes :
+      NOT coalesce(try( (classe 1) OR (classe 2) OR ... , false), false)
+        (classe 1) OR ...  vrai si le tronçon tombe dans une classe
+        try(..., false)    si le calcul plante (table absente...), vaut faux
+        coalesce(..., false) si une valeur est vide (NULL), vaut faux
+        NOT                inverse : la règle attrape tout ce qui n'est
+                           dans aucune classe
+
+    symbollevels="1" : dessin par niveaux. Les rubans sont au niveau 0
+    (pass="0"), les triangles au niveau 1 (pass="1") : tous les triangles
+    sont dessinés APRÈS tous les rubans, donc jamais recouverts.
+  -->
+  <renderer-v2 type="RuleRenderer" enableorderby="1" forceraster="0" symbollevels="1" referencescale="-1">
+    <rules key="{02005ceb-5a1c-4e0e-8000-000000000001}">
+      <!--
+        Tronçons sans observation. Valeur SANS accent dans le GeoPackage.
+        Même classe que les tronçons observés de score bas, trait distinct parce
+        qu'une absence d'observation n'est pas une absence d'EEE.
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000010}" symbol="0" label="Score MS 0 à 10 · Pas de problématique apparente — aucune observation enregistrée" filter="&quot;statut_donnee&quot; = 'aucune observation enregistree'"/>
+
+      <!--
+        Classe 0 à 10 : score atteignable sans aucun indicateur impacté.
+        Filtre = tronçon observé ET condition de la classe.
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000030}" symbol="1" label="Score MS 0 à 10 · Pas de problématique apparente — score n'impliquant pas d'indicateur impacté" filter="&quot;statut_donnee&quot; = 'observations enregistrees' AND (&quot;score_enjeu_MS&quot; &lt;= 10)"/>
+
+      <!--
+        Classe 11 à 12 : impossible sans au moins 1 indicateur impacté.
+        Filtre = tronçon observé ET condition de la classe.
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000031}" symbol="2" label="Score MS 11 à 12 · Problématique potentielle — score impliquant au moins 1 indicateur impacté" filter="&quot;statut_donnee&quot; = 'observations enregistrees' AND (&quot;score_enjeu_MS&quot; &gt; 10 AND &quot;score_enjeu_MS&quot; &lt;= 12)"/>
+
+      <!--
+        Classe 13 à 16 : impossible avec un seul indicateur impacté.
+        Filtre = tronçon observé ET condition de la classe.
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000032}" symbol="3" label="Score MS 13 à 16 · Problématique avérée — score impliquant au moins 2 indicateurs impactés" filter="&quot;statut_donnee&quot; = 'observations enregistrees' AND (&quot;score_enjeu_MS&quot; &gt; 12 AND &quot;score_enjeu_MS&quot; &lt;= 16)"/>
+
+      <!--
+        Contrôle : tronçon observé hors des classes (score vide, ou supérieur à 16
+        si des coefficients ont été modifiés, ou si un indicateur dépasse son maximum).
+        Contrôle : tronçon observé qui n'entre dans AUCUNE des classes ci-dessus
+        (voir l'explication NOT coalesce(try(...)) en tête du moteur de rendu).
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000029}" symbol="4" label="Score MS vide ou supérieur à 16 (à vérifier)" filter="&quot;statut_donnee&quot; = 'observations enregistrees' AND NOT coalesce(try((&quot;score_enjeu_MS&quot; &lt;= 10) OR (&quot;score_enjeu_MS&quot; &gt; 10 AND &quot;score_enjeu_MS&quot; &lt;= 12) OR (&quot;score_enjeu_MS&quot; &gt; 12 AND &quot;score_enjeu_MS&quot; &lt;= 16), false), false)"/>
+
+      <!--
+        Contrôle : statut vide, ou libellé modifié par une future version du lanceur.
+        IN (...) teste l'appartenance à la liste ; statut vide → coalesce → faux → NOT → vrai.
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000019}" symbol="5" label="Statut de la donnée non reconnu (à vérifier)" filter="NOT coalesce(&quot;statut_donnee&quot; IN ('observations enregistrees', 'aucune observation enregistree'), false)"/>
+
+      <!--
+        Tronçons fragmentés : cette règle s'AJOUTE à la couleur du tronçon.
+        num_geometries($geometry) = nombre de portions du polygone du tronçon.
+        Plus d'une portion = polygones de même identifiant fusionnés par le
+        lanceur (mode « fusion » de la déduplication).
+        scalemaxdenom="100000" : triangles visibles seulement à partir du
+        1:100 000 en zoomant. Dans la zone de test, 106 tronçons sur 337 sont
+        fragmentés, soit près de 500 triangles : à l'échelle d'une DIR entière,
+        ils recouvraient complètement les rubans colorés.
+      -->
+      <rule key="{02005ceb-5a1c-4e0e-8000-000000000003}" symbol="6" scalemaxdenom="100000" label="Tronçon en plusieurs portions dispersées (valeurs calculées sur l'ensemble) — visible dès le 1:100 000" filter="num_geometries($geometry) &gt; 1"/>
+    </rules>
+
+    <!--
+      ──────────────────────────────────────────────────────────────────────
+      SYMBOLES
+      ──────────────────────────────────────────────────────────────────────
+      Symboles de ruban (couche SimpleFill) :
+        color / outline_color  couleur "R,G,B,Alpha" (0 à 255)
+        style                  remplissage : solid (plein) ou no (vide)
+        outline_style          contour : solid, dash (tirets), dot (pointillés),
+                               dash dot (tiret-point)
+        outline_width + _unit  épaisseur en MM écran, constante à toute échelle
+        Remplissage et contour de même couleur : plein en zoom, lisible dézoomé.
+      Symbole du triangle (couche CentroidFill) : pose un marqueur sur le
+      polygone plutôt que de le remplir.
+        point_on_surface="1"   point garanti À L'INTÉRIEUR de la portion (un
+                               centroïde peut tomber hors d'un ruban courbe)
+        point_on_all_parts="1" un marqueur sur CHAQUE portion du tronçon
+        marqueur SimpleMarker : name=triangle, 3 mm, jaune 255,230,0,
+                               contour noir 0,4 mm
+      (Pas de commentaires À L'INTÉRIEUR des blocs <Option>.)
+    -->
+    <symbols>
+      <!--
+        Symbole 0 — Score MS 0 à 10 · Pas de problématique apparente — aucune observation enregistrée
+        #FFEAA7 : la couleur de la première classe, mais en tirets et
+        sans remplissage. La classe est la même, la qualité de la donnée ne l'est pas.
+      -->
+      <symbol type="fill" name="0" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000100}">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="255,234,167,255"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="255,234,167,255"/>
+            <Option type="QString" name="outline_style" value="dash"/>
+            <Option type="QString" name="outline_width" value="0.6"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="no"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+
+      <!--
+        Symbole 1 — Score MS 0 à 10 · Pas de problématique apparente — score n'impliquant pas d'indicateur impacté
+        #FFEAA7 = 255,234,167, teinte claire.
+      -->
+      <symbol type="fill" name="1" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000101}">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="255,234,167,255"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="255,234,167,255"/>
+            <Option type="QString" name="outline_style" value="solid"/>
+            <Option type="QString" name="outline_width" value="0.8"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="solid"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+
+      <!--
+        Symbole 2 — Score MS 11 à 12 · Problématique potentielle — score impliquant au moins 1 indicateur impacté
+        #FFCB25 = 255,203,37, couleur de référence de l'enjeu.
+      -->
+      <symbol type="fill" name="2" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000102}">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="255,203,37,255"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="255,203,37,255"/>
+            <Option type="QString" name="outline_style" value="solid"/>
+            <Option type="QString" name="outline_width" value="0.8"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="solid"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+
+      <!--
+        Symbole 3 — Score MS 13 à 16 · Problématique avérée — score impliquant au moins 2 indicateurs impactés
+        #B88C00 = 184,140,0, teinte foncée.
+      -->
+      <symbol type="fill" name="3" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000103}">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="184,140,0,255"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="184,140,0,255"/>
+            <Option type="QString" name="outline_style" value="solid"/>
+            <Option type="QString" name="outline_width" value="0.8"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="solid"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+
+      <!--
+        Symbole 4 — Score MS vide ou supérieur à 16 (à vérifier)
+        Noir pointillé : anomalie à vérifier, sans couleur « d'alerte ».
+      -->
+      <symbol type="fill" name="4" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000104}">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="0,0,0,255"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="0,0,0,255"/>
+            <Option type="QString" name="outline_style" value="dot"/>
+            <Option type="QString" name="outline_width" value="0.6"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="no"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+
+      <!--
+        Symbole 5 — Statut de la donnée non reconnu : noir pointillé.
+      -->
+      <symbol type="fill" name="5" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="SimpleFill" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000105}">
+          <Option type="Map">
+            <Option type="QString" name="border_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="color" value="0,0,0,255"/>
+            <Option type="QString" name="joinstyle" value="bevel"/>
+            <Option type="QString" name="offset" value="0,0"/>
+            <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+            <Option type="QString" name="offset_unit" value="MM"/>
+            <Option type="QString" name="outline_color" value="0,0,0,255"/>
+            <Option type="QString" name="outline_style" value="dot"/>
+            <Option type="QString" name="outline_width" value="0.6"/>
+            <Option type="QString" name="outline_width_unit" value="MM"/>
+            <Option type="QString" name="style" value="no"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+        </layer>
+      </symbol>
+
+      <!--
+        Symbole 6 — Triangle des tronçons fragmentés (niveau de dessin 1, au-dessus des rubans).
+      -->
+      <symbol type="fill" name="6" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+        <data_defined_properties>
+          <Option type="Map">
+            <Option type="QString" name="name" value=""/>
+            <Option name="properties"/>
+            <Option type="QString" name="type" value="collection"/>
+          </Option>
+        </data_defined_properties>
+        <layer class="CentroidFill" enabled="1" locked="0" pass="1" id="{02005ceb-5a1c-4e0e-8000-000000000190}">
+          <Option type="Map">
+            <Option type="QString" name="clip_on_current_part_only" value="0"/>
+            <Option type="QString" name="clip_points" value="0"/>
+            <Option type="QString" name="point_on_all_parts" value="1"/>
+            <Option type="QString" name="point_on_surface" value="1"/>
+          </Option>
+          <data_defined_properties>
+            <Option type="Map">
+              <Option type="QString" name="name" value=""/>
+              <Option name="properties"/>
+              <Option type="QString" name="type" value="collection"/>
+            </Option>
+          </data_defined_properties>
+          <symbol type="marker" name="@6@0" alpha="1" clip_to_extent="1" force_rhr="0" frame_rate="10" is_animated="0">
+            <data_defined_properties>
+              <Option type="Map">
+                <Option type="QString" name="name" value=""/>
+                <Option name="properties"/>
+                <Option type="QString" name="type" value="collection"/>
+              </Option>
+            </data_defined_properties>
+            <layer class="SimpleMarker" enabled="1" locked="0" pass="0" id="{02005ceb-5a1c-4e0e-8000-000000000191}">
+              <Option type="Map">
+                <Option type="QString" name="angle" value="0"/>
+                <Option type="QString" name="cap_style" value="square"/>
+                <Option type="QString" name="color" value="255,230,0,255"/>
+                <Option type="QString" name="horizontal_anchor_point" value="1"/>
+                <Option type="QString" name="joinstyle" value="bevel"/>
+                <Option type="QString" name="name" value="triangle"/>
+                <Option type="QString" name="offset" value="0,0"/>
+                <Option type="QString" name="offset_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+                <Option type="QString" name="offset_unit" value="MM"/>
+                <Option type="QString" name="outline_color" value="0,0,0,255"/>
+                <Option type="QString" name="outline_style" value="solid"/>
+                <Option type="QString" name="outline_width" value="0.4"/>
+                <Option type="QString" name="outline_width_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+                <Option type="QString" name="outline_width_unit" value="MM"/>
+                <Option type="QString" name="scale_method" value="diameter"/>
+                <Option type="QString" name="size" value="3"/>
+                <Option type="QString" name="size_map_unit_scale" value="3x:0,0,0,0,0,0"/>
+                <Option type="QString" name="size_unit" value="MM"/>
+                <Option type="QString" name="vertical_anchor_point" value="1"/>
+              </Option>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option type="QString" name="name" value=""/>
+                  <Option name="properties"/>
+                  <Option type="QString" name="type" value="collection"/>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </layer>
+      </symbol>
+    </symbols>
+
+    <!--
+      ──────────────────────────────────────────────────────────────────────
+      ORDRE DE DESSIN
+      ──────────────────────────────────────────────────────────────────────
+      Les polygones D et G d'un même PR se recouvrent à ~96 % : le dernier
+      dessiné masque l'autre. Clé de tri : -1 pour un tronçon non observé,
+      son score MS pour un tronçon observé. Tri croissant (asc="1") : les valeurs
+      les plus fortes sont dessinées en dernier, donc visibles.
+    -->
+    <orderby>
+      <orderByClause asc="1" nullsFirst="1">if("statut_donnee" = 'observations enregistrees', "score_enjeu_MS", -1)</orderByClause>
+    </orderby>
+  </renderer-v2>
+
+  <!--
+    ──────────────────────────────────────────────────────────────────────
+    ÉTIQUETTES (identiques au style 00, sauf une par portion)
+    ──────────────────────────────────────────────────────────────────────
+    Texte : champ "nom_plo_fi", Arial 8 pt, noir #1A1A1A.
+    Tampon : blanc, 1 mm, 85 % d'opacité, coins arrondis (bufferJoinStyle
+      128) : le numéro reste lisible sur n'importe quelle couleur.
+    Placement 4 = horizontal, à l'intérieur du polygone ; le texte peut
+      déborder d'un ruban étroit (fitInPolygonOnly="0") ; jamais deux
+      étiquettes superposées (PreventOverlap).
+    Visibles à partir du 1:50 000 : scaleMax="50000" (dans le vocabulaire
+      QGIS, scaleMax = l'échelle la plus dézoomée où l'étiquette apparaît).
+    obstacle="0" : les rubans ne repoussent pas leurs propres numéros.
+    labelPerPart="1" : un numéro sur CHAQUE portion d'un tronçon fragmenté,
+      pour pouvoir identifier chaque morceau isolé (différence avec le 00).
+  -->
+  <labeling type="simple">
+    <settings calloutType="simple">
+      <text-style fieldName="nom_plo_fi" isExpression="0"
+                  fontFamily="Arial" fontSize="8" fontSizeUnit="Point" fontWeight="50"
+                  textColor="26,26,26,255" textOpacity="1"
+                  multilineHeight="1" multilineHeightUnit="Percentage" allowHtml="0">
+        <families/>
+        <text-buffer bufferDraw="1" bufferSize="1" bufferSizeUnits="MM"
+                     bufferColor="255,255,255,255" bufferOpacity="0.85"
+                     bufferNoFill="1" bufferJoinStyle="128" bufferBlendMode="0"/>
+      </text-style>
+      <placement placement="4" polygonPlacementFlags="2" fitInPolygonOnly="0"
+                 overlapHandling="PreventOverlap" priority="5"
+                 dist="0" distUnits="MM" offsetType="0" quadOffset="4"
+                 xOffset="0" yOffset="0" offsetUnits="MM" rotationAngle="0"
+                 centroidWhole="0" centroidInside="0"/>
+      <rendering drawLabels="1" scaleVisibility="1" scaleMin="0" scaleMax="50000"
+                 obstacle="0" labelPerPart="1" upsidedownLabels="0"
+                 limitNumLabels="0" maxNumLabels="2000" minFeatureSize="0"
+                 fontLimitPixelSize="0" zIndex="0" unplacedVisibility="0"/>
+    </settings>
+  </labeling>
+
+  <selection mode="Default">
+    <selectionColor invalid="1"/>
+  </selection>
+  <blendMode>0</blendMode>
+  <featureBlendMode>0</featureBlendMode>
+
+  <!--
+    ──────────────────────────────────────────────────────────────────────
+    INFO-BULLE
+    ──────────────────────────────────────────────────────────────────────
+    [% ... %] = expression évaluée pour le tronçon survolé ; || colle des
+    textes ; if(condition, si_vrai, si_faux). Le HTML (<b>, <br>) est écrit
+    &lt; &gt; parce qu'on est dans du XML.
+    Ligne 1 : numéro du tronçon, puis avertissement s'il est fragmenté.
+    Ligne 2 : score MS et points de chaque indicateur (observé).
+    Dernière ligne : résumé "synthese_EEE" rédigé par le lanceur.
+  -->
+  <mapTip enabled="1">&lt;b&gt;Tronçon [% "nom_plo_fi" %]&lt;/b&gt;[% if(num_geometries($geometry) &gt; 1, '&lt;br&gt;⚠ Tronçon composé de ' || num_geometries($geometry) || ' portions dispersées : valeurs calculées sur toutes les portions réunies', '') %]&lt;br&gt;[% if("statut_donnee" = 'observations enregistrees', 'Score MS : ' || "score_enjeu_MS" || ' / 16 (MS1 ' || "MS1_impact" || ' · MS1b ' || "MS1b_impact" || ' · MS2 ' || "MS2_impact" || ' · MS3 ' || "MS3_impact" || ')', 'Aucune observation enregistrée') %]&lt;br&gt;[% "synthese_EEE" %]</mapTip>
+
+  <!-- 2 = polygones : QGIS refuse ce style sur une couche de points ou de lignes. -->
+  <layerGeometryType>2</layerGeometryType>
+</qgis>
