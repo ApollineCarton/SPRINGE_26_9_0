@@ -1,0 +1,68 @@
+Variables,description_variable,Enjeu,EEE,,,,
+species_name_sci,Nom scientifique (binomial latin),,Ailanthus altissima,Ambrosia artemisiifolia,Heracleum mantegazzianum,Reynoutria sp,EEE autre
+species_name_common,Nom(s) commun(s) français,,Ailante,Ambroisie,Berce du Caucase,Renouees,Autre
+life_form,Type biologique: herbacée/ligneuse_arbuste/ligneuse_arbre/liane,,tree,herbaceous,herbaceous,herbaceous,herbaceous
+season_form,annuelle/vivace/bisannuelle,,vivace,annual,annual,vivace,vivace
+height_max_cm,Hauteur maximale en cm,MS,2500,10-150,450-500,300,150
+growth_habit,Port: dresse/etale/rampant/grimpant,maintenance,dresse,dresse,dresse,dresse,dresse
+density_habit,dense/aere,maintenance,dense,dense,dense,dense,dense
+root_system_type,Type système racinaire: pivotant/fascicule/rhizomateux/stolonifere/drageonnant,"maintenance, propagation",drageon,pivotant,pivotant,rhizomateux,fascicule
+root_depth_cm,Profondeur racines en cm,maintenance,200,30,50,100,50
+root_penetration_force,Force pénétration racines: faible/moyenne/forte,maintenance,forte,faible,moyenne,forte,moyenne
+root_aggressivity,"Repose sur un calcul effectué grâce à 'root_system_type', 'root_depth_cm' et 'root_penetration_force'. Voir livret d'explication de l'algorithme de calcul, Partie MS3.",maintenance,fort,nul,modéré,fort,faible
+reproduction_sexual,Reproduction sexuée: oui/non,propagation,oui,oui,oui,oui,oui
+reproduction_asexual,Reproduction asexuée: oui/non,propagation,oui,non,non,oui,oui
+reproduction_dominant_mode,Mode reproduction dominant: sexuee/asexuee/mixte,propagation,mixte,sexuee,sexuee,asexuee,mixte
+seed_production_per_year,Nombre graines produites par individu et par an,propagation,350000,plusieurs milliards,10000,5000,100000
+blossoming_period,période floraison,propagation,june-august,august-september,june-september,may-august,june-september
+seed_production_period,"Période production graines (mois, ex: juin-septembre)",propagation,september-october,october-november,august-october,august-septembre,august-october
+seed_germination_rate_pct,Taux germination des graines en %,propagation,70,40,60,80,50
+seed_bank_longevity_years,Longévité banque graines dans sol (années),propagation,3,10,7,2,5
+dispersal_wind,Dispersion anémochorie (vent): oui/non,propagation,oui,oui,oui,non,oui
+dispersal_water,Dispersion hydrochorie (eau): oui/non,propagation,non,non,oui,oui,oui
+dispersal_animals,Dispersion zoochorie (animaux): oui/non,propagation,non,non,oui,non,non
+dispersal_human,Dispersion anthropochorie (humains/véhicules): oui/non,propagation,oui,oui,oui,oui,oui
+dispersal_gravity,Dispersion barochorie (gravité/fragments): oui/non,propagation,oui,non,non,oui,oui
+dispersal_dominant_vector,Vecteur dispersion dominant : wind/water/animals/human/gravity,propagation,wind,wind,human,water,human
+dispersal_distance_local_m,Distance dispersion locale en mètres,propagation,100,20,10,200,50
+dispersal_distance_long,Dispersion longue distance probable : oui/non,propagation,oui,oui,non,oui,oui
+expansion_rate_m2_per_year,Vitesse expansion territoriale en m²/an,propagation,1,5,3,10,2
+population_doubling_time_years,Temps doublement population en années,propagation,5,2,4,2,3
+habitat_aquatic_wetland,Habitat milieux aquatiques/humides: oui/non,environnement,non,non,oui,oui,non
+habitat_riparian_forest,habitat ripisylve,environnement,oui,non,oui,oui,oui
+habitat_wasteland_disturbed,Habitat friches/terrains remaniés: oui/non (plante rudérale),environnement,oui,oui,oui,oui,oui
+habitat_roadsides_railways,Habitat bords routes/voies ferrées: oui/non (plante rudérale),environnement,oui,oui,oui,oui,oui
+habitat_crop,habitat de culture (plante adventice),,non,oui,non,non,non
+habitat_forest_edges,Habitat forêts/lisières: oui/non,environnement,oui,non,oui,oui,oui
+habitat_grasslands,Habitat prairies/pelouses: oui/non,environnement,non,non,oui,non,non
+habitat_dominant,"Habitat dominant (aquatic_wetland, wasteland_disturbed, roadsides_railways, forest_edges, grasslands)",environnement,wasteland_disturbed,roadsides_railways,riparian_forest,aquatic_wetland,roadsides_railways
+disturbance_sensitivity,Sensibilité perturbations: pionniere_stricte/post_pionniere/mature,environnement,pioneer,pioneer,pioneer,pioneer,pioneer
+competitivity_level,"Niveau compétitivité:  low, medium, high",environnement,high,medium,high,high,medium
+forms_monospecific_stands,Forme peuplements monospécifiques: oui/non,environnement,oui,non,oui,oui,oui
+ph_tolerance,Tolérance pH: acide/neutre/basique/indifferent,environnement,acid,indifferent,neutre,indifferent,indifferent
+moisture_preference,Préférence hydrique: xerophile/mesophile/hygrophile/indifferent,environnement,mesophile,mesophile,hygrophile,hygrophile,mesophile
+light_requirement,Besoin lumière: heliophile/mi_ombre/sciaphile,environnement,heliophile,heliophile,mi-ombre,heliophile,heliophile
+nutrient_preference,Préférence nutriments: oligotrophe/mesotrophe/eutrophe,environnement,oligotrophic,eutrophe,eutrophe,mesotrophe,mesotrophe
+coef_visual_obstruction,Coefficient obstruction visuelle (0-1),maintenance,0.8,0.2,0.9,0.7,0.5
+mechanical_risk_falling_branches,Risque branches cassantes sur voie: oui/non,maintenance,oui,non,non,non,non
+mechanical_risk_slope_destabilization,Risque déstabilisation talus: oui/non,maintenance,oui,non,non,oui,non
+allergenicity_score,"Score allergénicité (0=nul, 1=faible, 2=modéré, 3=fort)",maintenance,0,3,0,0,1
+contact_toxicity_score,Score toxicité contact (0-3),maintenance,1,0,3,1,1
+toxic_plant_parts,Parties toxiques: pollen/seve/feuilles/fruits,maintenance,"""ecorce, feuilles""","""pollen""","""seve, feuilles""","""seve, feuilles""","""seve, feuilles"""
+risk_period_months,Période à risque sanitaire (mois),maintenance,all,august_october,june-september,may-september,may-september
+critical_exposure_distance_m,Distance critique exposition en mètres,maintenance,5,100,2,5,10
+coef_infrastructure_damage,Coefficient destructivité infrastructures (0-1),maintenance,0.8,0.1,0.3,0.9,0.3
+targeted_infrastructure_types,Types ouvrages ciblés,maintenance,"chaussee, murs, reseaux",aucun,"chaussee, ouvrages_art","chaussee, ouvrages_art, reseaux","chaussee, reseaux_affleurants"
+degradation_mechanism,Mécanisme dégradation,maintenance,"soulevement, fissuration",aucun,pression_mecanique,"soulevement, fissuration, penetration","soulevement, fissuration"
+coef_native_flora_competition,Coefficient compétition flore indigène (0-1),environnement,0.8,0.5,0.7,0.9,0.5
+impacted_native_groups,Groupes indigènes impactés,environnement,"herbacees, arbustes, jeunes_arbres",herbacees,"herbacees, arbustes","herbacees, arbustes, arbres_ripisylve","herbacees, arbustes"
+habitat_transformation_soil,Modification pH/composition sol: oui/non,environnement,oui,non,non,oui,non
+habitat_transformation_hydrology,Modification régime hydrique: oui/non,environnement,non,non,non,oui,non
+habitat_transformation_structure,Modification structure végétation: oui/non,environnement,oui,oui,oui,oui,oui
+threatened_eunis_habitats,Codes habitats Eunis menacés,environnement,G1.A,E1.7,C3.1,C3,
+invasive_potential_score,Score potentiel invasif global (0-1),environnement,0.9,0.7,0.6,0.95,0.6
+critical_development_stage,Stade critique intervention,,plantule,rosette,rosette,jeune pousse,vegetative
+optimal_intervention_period,Période optimale intervention (mois),,march-may,april-june,april-may,march-june,april-june
+eradication_difficulty,Difficulté éradication (1-5),,5,3,3,5,3
+recommended_management_techniques,Techniques gestion recommandées,,"arrachage, coupe_repetee, traitement_souche","arrachage manuel, fauche avant floraison","coupe avant floraison, arrachage jeunes plants","arrachage rhizomes, bache, coupe repetee","arrachage manuel, fauche repetee, bache occultante"
+bibliography,source des données,,Fiche synthèse Dreevers V.03-2025 ; Serge Muller 2004 Plantes invasives en France MNHN Patrimpine naturel vol 62,Serge Muller 2004 Plantes invasives en France MNHN Patrimpine naturel vol 62,Serge Muller 2004 Plantes invasives en France MNHN Patrimpine naturel vol 62,,
