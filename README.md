@@ -385,9 +385,8 @@ Si permissions refusées → vérifier antivirus, permissions dossier.
 ## 📞 Contact
 
 **Auteur** : Apolline CARTON  
-**Organisme** : Office Français de la Biodiversité (OFB)  
-**Email** : [contact]  
-**Site** : [https://www.ofb.gouv.fr](https://www.ofb.gouv.fr)
+**Organisme** : Office Français de la Biodiversité (OFB)  & Conservatoire Botanique National (CBNB)
+**Email** : contact de référence : arnaud.albert@ofb.gouv.fr
 
 ### Signaler un bug
 
@@ -399,6 +398,6 @@ Créer une issue avec :
 
 ---
 
-**Dernière mise à jour** : 21 septembre 2026  
-**Version** : 26.9.0 (Beta)  
+**Dernière mise à jour** : 28 septembre 2026  
+**Version** : 26.9.0  
 **Statut** : Prêt pour déploiement opérationnel
